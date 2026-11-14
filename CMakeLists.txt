@@ -46,20 +46,23 @@ set(MLX_BUILD_EXAMPLES OFF)
 set(MLX_BUILD_BENCHMARKS OFF)
 set(MLX_BUILD_PYTHON_BINDINGS OFF)
 
-# mlx: v0.32.4 plus MLX_RING_SOURCE_IPS, which binds the ring's outgoing
-# connections to given IPs, the same commit as the Source/Cmlx/mlx submodule
+# mlx: PicoMLX/mlx pico/integration (MLX main plus the fork's ring IP
+# binding, argpartition, left_padding and kv_offsets changes), the same commit
+# as the Source/Cmlx/mlx submodule
 FetchContent_Declare(
   mlx
   GIT_REPOSITORY "https://github.com/PicoMLX/mlx.git"
-  GIT_TAG "598b041ba7146e830a340a6317476815d42e7ab5")
+  GIT_TAG "8cd646dcd0217a669ce7aa836cb25353f7cde4fb")
 FetchContent_MakeAvailable(mlx)
 
-# mlx-c
+# mlx-c: PicoMLX/mlx-c pico/integration (v0.8.0 built against MLX main, plus
+# the left-padded SDPA binding), the same commit as the Source/Cmlx/mlx-c
+# submodule
 set(MLX_C_BUILD_EXAMPLES OFF)
 FetchContent_Declare(
   mlx-c
-  GIT_REPOSITORY "https://github.com/ml-explore/mlx-c.git"
-  GIT_TAG "v0.8.0")
+  GIT_REPOSITORY "https://github.com/PicoMLX/mlx-c.git"
+  GIT_TAG "4edbf4967cca73d6d1d054a4eea58b0861acf3a0")
 FetchContent_MakeAvailable(mlx-c)
 
 # swift-numerics

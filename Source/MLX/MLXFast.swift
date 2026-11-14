@@ -262,6 +262,46 @@ public enum MLXFast {
         return MLXArray(result)
     }
 
+    /// Scaled dot-product attention over a left-padded batch.
+    ///
+    /// Each row of `keys` and `values` is left-padded to the longest row. Instead of a
+    /// boolean mask, pass each row's padding count. On Metal, eligible shapes with up to
+    /// 8 queries skip the padded keys without reading them; other cases build the
+    /// equivalent boolean mask from the counts.
+    ///
+    /// - Parameters:
+    ///   - queries: queries with shape `[B, N_q, T_q, D]`
+    ///   - keys: keys with shape `[B, N_kv, T_kv, D]`
+    ///   - values: values with shape `[B, N_kv, T_kv, D]`
+    ///   - scale: scale for queries, typically `1 / sqrt(q.dim(-1))`
+    ///   - leftPadding: int32 array of shape `[B]`, the number of padded key slots at the
+    ///     start of each row. Each count must satisfy `0 <= count < T_kv`, and with
+    ///     `causal` also `count <= T_kv - T_q`. Counts are not checked.
+    ///   - causal: apply lower-right causal masking on top of the padding
+    ///   - kvOffsets: optional int32 array of shape `[B]`, each row's KV cursor before the
+    ///     query block, for rows that end at different columns (for example after a
+    ///     speculative rollback). Requires `causal`. Query `j` of row `b` attends to keys
+    ///     `leftPadding[b] ... kvOffsets[b] + j`. Cursor values are not checked.
+    ///   - stream: stream to evaluate on
+    public static func scaledDotProductAttention(
+        queries: MLXArray, keys: MLXArray, values: MLXArray, scale: Float,
+        leftPadding: MLXArray,
+        causal: Bool = false,
+        kvOffsets: MLXArray? = nil,
+        stream: StreamOrDevice = .default
+    ) -> MLXArray {
+        var result = mlx_array_new()
+
+        mlx_fast_scaled_dot_product_attention_left_padding(
+            &result,
+            queries.ctx, keys.ctx, values.ctx, scale,
+            causal ? "causal" : "",
+            leftPadding.ctx,
+            (kvOffsets ?? .mlxNone).ctx,
+            stream.ctx)
+        return MLXArray(result)
+    }
+
     /// Root Mean Square normalization (RMS norm).
     ///
     /// The normalization is with respect to the last axis of the input `x`.

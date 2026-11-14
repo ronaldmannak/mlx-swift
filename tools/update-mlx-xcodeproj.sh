@@ -58,6 +58,7 @@ for x in \
     stream.h \
     transforms.h \
     utils.h \
+    config.h \
     version.h \
     allocator.h \
     dtype.h \
@@ -74,7 +75,7 @@ for x in \
     primitives.h \
     backend/metal/device.h \
     backend/metal/resident.h \
-    backend/common/metal_kernel.h \
+    backend/common/custom_kernel.h \
     backend/common/utils.h \
     backend/cpu/encoder.h \
     backend/gpu/eval.h

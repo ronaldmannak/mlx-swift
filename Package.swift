@@ -337,7 +337,7 @@ let cmlx = Target.target(
         .headerSearchPath("json/single_include/nlohmann"),
         .headerSearchPath("fmt/include"),
         // MLX's CMake reads this from mlx/version.h; tools/update-mlx.sh keeps it in sync
-        .define("MLX_VERSION", to: "\"0.32.4\""),
+        .define("MLX_VERSION", to: "\"0.32.5\""),
         .disableWarning("shorten-64-to-32"),
     ],
     linkerSettings: linkerSettings,

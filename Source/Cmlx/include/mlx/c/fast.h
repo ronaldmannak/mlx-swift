@@ -213,6 +213,23 @@ int mlx_fast_scaled_dot_product_attention(
     const mlx_array sinks /* may be null */,
     bool force_fused,
     const mlx_stream s);
+/**
+ * Pico fork: scaled dot-product attention over a left-padded batch.
+ * `left_padding` is an int32 [B] array of padded key slots per row. With
+ * `mask_mode` "causal", `kv_offsets` (int32 [B], may be null) is each row's
+ * KV cursor before the query block: query j of row b attends to keys
+ * left_padding[b] ... kv_offsets[b] + j. `mask_mode` must be "" or "causal".
+ */
+int mlx_fast_scaled_dot_product_attention_left_padding(
+    mlx_array* res,
+    const mlx_array queries,
+    const mlx_array keys,
+    const mlx_array values,
+    float scale,
+    const char* mask_mode,
+    const mlx_array left_padding,
+    const mlx_array kv_offsets /* may be null */,
+    const mlx_stream s);
 
 /**@}*/
 
