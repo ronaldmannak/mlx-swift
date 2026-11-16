@@ -53,6 +53,38 @@ class MLXFastLeftPaddingTests: XCTestCase {
         }
     }
 
+    #if os(macOS) && arch(arm64)
+        func testMixedLengthBF16DecodeMatchesSolo() throws {
+            guard Device.defaultDevice() == .gpu else {
+                throw XCTSkip("Requires Metal.")
+            }
+            // Cover the 1,024- and 4,096-key cutoffs used by different Metal GPU families.
+            let lengths = [1023, 1024, 4095, 4096, 4128]
+            let physicalKeys = lengths.last!
+            let pads = lengths.map { physicalKeys - $0 }
+            let (qInput, kInput, vInput) = inputs(
+                batch: lengths.count, queryHeads: 4, kvHeads: 1, queries: 1,
+                keys: physicalKeys, dim: 128)
+            let q = qInput.asType(.bfloat16)
+            let k = kInput.asType(.bfloat16)
+            let v = vInput.asType(.bfloat16)
+            let scale: Float = 1 / sqrt(128)
+            let actual = MLXFast.scaledDotProductAttention(
+                queries: q, keys: k, values: v, scale: scale,
+                leftPadding: MLXArray(pads.map(Int32.init)))
+            for (index, pad) in pads.enumerated() {
+                let row = index ..< index + 1
+                let expected = MLXFast.scaledDotProductAttention(
+                    queries: q[row], keys: k[row, 0..., pad..., 0...],
+                    values: v[row, 0..., pad..., 0...], scale: scale, mask: .none)
+                XCTAssertTrue(
+                    arrayEqual(actual[row].view(dtype: .uint16), expected.view(dtype: .uint16))
+                        .item(),
+                    "\(lengths[index]) valid keys")
+            }
+        }
+    #endif
+
     func testKVOffsetsSkipStaleSuffix() {
         // Rows end at different columns; keys after each row's cursor are stale.
         let queries = 3

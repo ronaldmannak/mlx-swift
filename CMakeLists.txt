@@ -47,12 +47,12 @@ set(MLX_BUILD_BENCHMARKS OFF)
 set(MLX_BUILD_PYTHON_BINDINGS OFF)
 
 # mlx: PicoMLX/mlx pico/integration (MLX main plus the fork's ring IP
-# binding, argpartition, left_padding and kv_offsets changes), the same commit
-# as the Source/Cmlx/mlx submodule
+# binding, argpartition, left_padding, kv_offsets and per-row SDPA dispatch),
+# the same commit as the Source/Cmlx/mlx submodule.
 FetchContent_Declare(
   mlx
   GIT_REPOSITORY "https://github.com/PicoMLX/mlx.git"
-  GIT_TAG "8cd646dcd0217a669ce7aa836cb25353f7cde4fb")
+  GIT_TAG "ee5cb47e533f5449a3960ae41000ebfffaf45442")
 FetchContent_MakeAvailable(mlx)
 
 # mlx-c: PicoMLX/mlx-c pico/integration (v0.8.0 built against MLX main, plus
