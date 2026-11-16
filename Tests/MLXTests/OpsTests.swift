@@ -10,6 +10,20 @@ class OpsTests: XCTestCase {
     override class func setUp() {
     }
 
+    #if os(macOS) && arch(arm64)
+        func testArgPartitionWideRowEdgeOnMetal() throws {
+            guard Device.defaultDevice() == .gpu else {
+                throw XCTSkip("Requires Metal.")
+            }
+            let width = 16_385
+            let count = 32
+            let values = -MLXArray(0 ..< width).asType(.float32)
+            let indices = argPartition(values, kth: count - 1, axis: -1, stream: .gpu)
+            let selected = Set(indices[0 ..< count].asArray(UInt32.self))
+            XCTAssertEqual(selected, Set((width - count ..< width).map(UInt32.init)))
+        }
+    #endif
+
     func testAsStridedReshape() {
         // just changing the shape and using the default strides is the same as reshape
         let a = MLXArray(0 ..< 12, [4, 3])
