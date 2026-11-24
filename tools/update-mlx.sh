@@ -20,7 +20,10 @@ cp Source/Cmlx/mlx-c/mlx/c/*.h Source/Cmlx/include/mlx/c
 
 mkdir build
 cd build
-cmake ../Source/Cmlx/mlx -DMLX_METAL_JIT=ON -DMACOS_VERSION=14.0
+# Use the host target to generate optional kernels such as NAX as well.
+# Runtime deployment targets are set in Package.swift and the Xcode configs.
+cmake ../Source/Cmlx/mlx -DMLX_METAL_JIT=ON \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET="$(sw_vers -productVersion)"
 
 # run the cmake build to generate the source files
 cd mlx/backend/metal
