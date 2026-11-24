@@ -18,7 +18,7 @@ jobs:
     if: github.repository == 'ml-explore/mlx-swift'
     runs-on: [self-hosted, macos]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.1.0
         with:
           submodules: recursive
 
@@ -51,7 +51,7 @@ jobs:
 
       - name: Upload XCFrameworks as workflow artifacts
         if: ${{ !(github.event.release.tag_name || inputs.tag) }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: xcframeworks
           if-no-files-found: error

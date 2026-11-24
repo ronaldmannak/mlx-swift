@@ -12,6 +12,7 @@
 
 #include <Cmlx/mlx-array.h>
 #include <Cmlx/mlx-backend-common-custom_kernel.h>
+#include <Cmlx/mlx-backend-metal-metal.h>
 #include <Cmlx/mlx-backend-metal-resident.h>
 #include <Cmlx/mlx-device.h>
 
@@ -269,8 +270,6 @@ MLX_API CommandEncoder& get_command_encoder(Stream s);
 std::unordered_map<int, CommandEncoder>& get_command_encoders();
 std::unordered_map<int, CommandEncoder>& get_global_command_encoders();
 NS::SharedPtr<NS::AutoreleasePool> new_scoped_memory_pool();
-
-bool is_nax_available();
 
 // Number of GPU cores, or 0 when it is not known.
 int gpu_core_count();

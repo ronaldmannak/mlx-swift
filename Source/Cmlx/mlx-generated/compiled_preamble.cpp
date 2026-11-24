@@ -424,6 +424,13 @@ template <typename T> bool all(Simd<T, 1> x) { return x.value; }
 }
 
 namespace mlx::core::simd {
+template <typename To, typename From>
+inline To bit_cast(const From& from) {
+  static_assert(sizeof(To) == sizeof(From));
+  To to;
+  __builtin_memcpy(&to, &from, sizeof(To));
+  return to;
+}
 constexpr float inf = std::numeric_limits<float>::infinity();
 template <typename T, int N>
 Simd<T, N> exp(Simd<T, N> in) {
@@ -448,8 +455,11 @@ Simd<T, N> exp(Simd<T, N> in) {
     x = fma(x, fpart, 2.402264791363012e-1f);
     x = fma(x, fpart, 6.931472028550421e-1f);
     x = fma(x, fpart, 1.000000000000000f);
-    Simd<int, N> epart = (Simd<int, N>(ipart) + 127) << 23;
-    auto result = select(isnan(x_init), x_init, (*(Simd<float, N>*)&epart) * x);
+    auto ibits = bit_cast<Simd<uint32_t, N>>(ipart + 12582912.0f);
+    constexpr uint32_t bias = 127u - 0x4B400000u;
+    Simd<uint32_t, N> epart = (ibits + bias) << 23;
+    auto result =
+        select(isnan(x_init), x_init, bit_cast<Simd<float, N>>(epart) * x);
     result = select(x_init > 88.0f, Simd<float, N>(inf), result);
     result = select(x_init < -88.0f, Simd<float, N>(0), result);
     return Simd<T, N>(result);
@@ -674,13 +684,28 @@ template <int N>
 Simd<uint32_t, N> fp32_to_bits(Simd<float, N> x) {
   return *(Simd<uint32_t, N>*)(&x);
 }
+template <int N>
+Simd<float, N> narrow_round_to_odd(Simd<double, N> x) {
+  Simd<float, N> f = x;
+  Simd<double, N> back = f;
+  auto bits = fp32_to_bits(f);
+  auto needs_fix = (back != x) && ((bits & 1u) == 0u);
+  auto overshot = abs(back) > abs(x);
+  auto fixed = select(overshot, bits - 1u, bits + 1u);
+  return fp32_from_bits(select(needs_fix, fixed, bits));
+}
 struct ToFP8 {
   template <typename T, int N>
   Simd<uint8_t, N> operator()(Simd<T, N> f) {
     uint32_t fp8_max = 543 << 21;
     auto denorm_mask = Simd<uint32_t, N>(141 << 23);
     Simd<uint32_t, N> f_bits;
-    Simd<float, N> f32 = f;
+    Simd<float, N> f32;
+    if constexpr (std::is_same_v<T, double>) {
+      f32 = narrow_round_to_odd(f);
+    } else {
+      f32 = f;
+    }
     f_bits = fp32_to_bits(f32);
     Simd<uint8_t, N> result = 0u;
     auto sign = f_bits & 0x80000000;
@@ -711,7 +736,8 @@ struct FromFP8 {
     auto sign_bit = Simd<uint16_t, N>((x >> 7) & 1) << 15;
     auto u = (v << 7) | (((v + 1) >> 7) << 14) | sign_bit;
     Simd<float, N> out;
-    if constexpr (simd::max_size<float16_t> >= N) {
+    constexpr bool has_fp16_simd = N <= simd::max_size<float16_t>;
+    if constexpr (has_fp16_simd) {
       auto converted = *(Simd<float16_t, N>*)(&u);
       out = converted * 256.0;
     } else {

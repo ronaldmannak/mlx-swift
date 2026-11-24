@@ -1,6 +1,19 @@
 cmake_minimum_required(VERSION 3.16)
 project(MLXSwift LANGUAGES C CXX Swift)
 
+if(APPLE AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  set(MLX_SWIFT_MACOS_TARGET "${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  if(NOT MLX_SWIFT_MACOS_TARGET)
+    execute_process(
+      COMMAND sw_vers -productVersion
+      OUTPUT_VARIABLE MLX_SWIFT_MACOS_TARGET
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+  endif()
+  if(MLX_SWIFT_MACOS_TARGET VERSION_LESS 15.0)
+    message(FATAL_ERROR "mlx-swift requires macOS 15.0 or later")
+  endif()
+endif()
+
 # ----------------------------- Setup -----------------------------
 # note: 1:1 mirror of MLX configs
 
@@ -52,7 +65,7 @@ set(MLX_BUILD_PYTHON_BINDINGS OFF)
 FetchContent_Declare(
   mlx
   GIT_REPOSITORY "https://github.com/PicoMLX/mlx.git"
-  GIT_TAG "ee5cb47e533f5449a3960ae41000ebfffaf45442")
+  GIT_TAG "9b9fab0d00d48803a34495627fc0415c7d40fa7f")
 FetchContent_MakeAvailable(mlx)
 
 # mlx-c: PicoMLX/mlx-c pico/integration (v0.8.0 built against MLX main, plus

@@ -1,0 +1,40 @@
+name: Pico integration validation
+
+on:
+  pull_request:
+  push:
+    branches: [pico/integration]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pico-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  swift-integration:
+    if: github.repository == 'ronaldmannak/mlx-swift' || github.repository == 'PicoMLX/mlx-swift'
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6.1.0
+        with:
+          submodules: recursive
+      - name: Verify the build toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          xcodebuild -showComponent MetalToolchain
+      - name: Verify the SwiftPM source exclusions
+        run: python3 scripts/verify-spm-manifest.py
+      - name: Test the native bridge and Pico attention integration
+        run: |
+          xcodebuild test -scheme mlx-swift-Package -destination 'platform=macOS' \
+            -derivedDataPath .build/pico-ci -jobs 3 -parallel-testing-enabled NO \
+            -skipPackagePluginValidation -skipMacroValidation \
+            -only-testing:CmlxTests \
+            -only-testing:MLXTests/MLXFastLeftPaddingTests \
+            -only-testing:MLXTests/OpsTests \
+            -only-testing:MLXTests/VersionTests
