@@ -340,6 +340,11 @@ let cmlx = Target.target(
         .headerSearchPath("fmt/include"),
         // MLX's CMake reads this from mlx/version.h; tools/update-mlx.sh keeps it in sync
         .define("MLX_VERSION", to: "\"0.32.5\""),
+        // MLX's CMake Release builds define NDEBUG; Xcode's Release builds of
+        // this package don't. Without it, a release build keeps MLX's debug
+        // checks, which on Metal verify every op's buffers against a map of
+        // live allocations.
+        .define("NDEBUG", .when(configuration: .release)),
         .disableWarning("shorten-64-to-32"),
     ],
     linkerSettings: linkerSettings,
